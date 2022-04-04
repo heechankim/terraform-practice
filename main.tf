@@ -2,20 +2,32 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
+variable "server_name" {
+  description = "The name of web server"
+  type = string
+  default = "terra-example"
+}
+
+variable "server_port" {
+  description = "The port the server will use for HTTP requests"
+  type = number
+  default = 8080
+}
+
 resource "aws_security_group" "instance" {
-  name = "terraform-example-instance"
+  name = "${var.server_name}"
 
   vpc_id = "vpc-03c1e8a33ab568b4f"
 
   ingress {
-    from_port = 8080
-    to_port = 8080
+    from_port = var.server_port
+    to_port = var.server_port
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-resource "aws_instance" "example" {
+resource "aws_instance" "terra-example" {
   ami = "ami-063454de5fe8eba79"
   instance_type = "t2.micro"
   subnet_id = "subnet-02abe304152c47909"
@@ -26,11 +38,16 @@ resource "aws_instance" "example" {
 
   user_data = <<-EOF
                   #!/bin/bash
-                  echo "Hello, World!!" > index.html
-                  nohup busybox httpd -f -p 8080 &
+                  echo "Hello, World!!\n${var.server_name}" > index.html
+                  nohup busybox httpd -f -p ${var.server_port} &
                   EOF
 
   tags = {
-    Name = "terraform-example"
+    Name = "${var.server_name}"
   }
+}
+
+output "server_ip" {
+  value = aws_instance.terra-example.public_ip
+  description = "The Public IP address of the webserver"
 }
