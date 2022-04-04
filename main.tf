@@ -22,6 +22,8 @@ resource "aws_instance" "example" {
   
   vpc_security_group_ids = [aws_security_group.instance.id]
 
+  associate_public_ip_address = true
+
   user_data = <<-EOF
                   #!/bin/bash
                   echo "Hello, World!!" > index.html
