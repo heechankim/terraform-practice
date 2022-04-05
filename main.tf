@@ -63,3 +63,8 @@ resource "aws_autoscaling_group" "terra-example-asg" {
   }
 }
 
+resource "aws_lb" "terra-lb" {
+  name = "terra-example-lb"
+  load_balancer_type = "application"
+  subnets = data.aws_subnets.default-sn.ids
+}
