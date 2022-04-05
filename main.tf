@@ -8,14 +8,23 @@ variable "server_port" {
   default = 8080
 }
 
-data "aws_vpc" "default_vpc" {
-  default = true
+data "aws_vpc" "selected" {
+  tags = {
+    Name = "default-vpc"
+  }
+}
+
+data "aws_subnets" "default-sn" {
+  filter {
+    name = "vpc-id"
+    values = [data.aws_vpc.selected.id]
+  }
 }
 
 resource "aws_security_group" "instance" {
   name = "sg-terra-example"
 
-  vpc_id = data.aws_vpc.default.id 
+  vpc_id = data.aws_vpc.selected.id 
 
   ingress {
     from_port = var.server_port
