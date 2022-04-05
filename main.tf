@@ -63,8 +63,28 @@ resource "aws_autoscaling_group" "terra-example-asg" {
   }
 }
 
+
+
 resource "aws_lb" "terra-lb" {
   name = "terra-example-lb"
   load_balancer_type = "application"
   subnets = data.aws_subnets.default-sn.ids
 }
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.terra-lb.arn
+  port = 80
+  protocol = "HTTP"
+
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: page not found"
+      status_code = 404
+    }
+  }
+}
+
+
