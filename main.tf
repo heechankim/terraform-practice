@@ -21,8 +21,21 @@ data "aws_subnets" "default-sn" {
   }
 }
 
+data "aws_subnet" "default-public1" {
+  filter {
+    name = "tag:Name"
+    values = ["default-subnet-public1-ap-northeast-2a"]
+  }
+}
+data "aws_subnet" "default-public2" {
+  filter {
+    name = "tag:Name"
+    values = ["default-subnet-public2-ap-northeast-2b"]
+  }
+}
+
 resource "aws_security_group" "instance" {
-  name = "sg-terra-example"
+  name = "terra-example-sg"
 
   vpc_id = data.aws_vpc.selected.id 
 
@@ -53,6 +66,11 @@ resource "aws_launch_configuration" "terra-example" {
 resource "aws_autoscaling_group" "terra-example-asg" {
   launch_configuration = aws_launch_configuration.terra-example.name
 
+  vpc_zone_identifier = data.aws_subnets.default-sn.ids
+
+  target_group_arns = [aws_lb_target_group.asg.arn]
+  health_check_type = "ELB"
+
   min_size = 2
   max_size = 10
 
@@ -65,6 +83,7 @@ resource "aws_autoscaling_group" "terra-example-asg" {
 
 resource "aws_security_group" "alb" {
   name = "terra-example-alb"
+  vpc_id = data.aws_vpc.selected.id 
 
   ingress {
     from_port = 80
@@ -72,6 +91,7 @@ resource "aws_security_group" "alb" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
 
   egress {
     from_port = 0
@@ -84,7 +104,7 @@ resource "aws_security_group" "alb" {
 resource "aws_lb" "terra-lb" {
   name = "terra-example-lb"
   load_balancer_type = "application"
-  subnets = data.aws_subnets.default-sn.ids
+  subnets = [data.aws_subnet.default-public1.id, data.aws_subnet.default-public2.id] 
   security_groups = [aws_security_group.alb.id]
 }
 
@@ -121,11 +141,26 @@ resource "aws_lb_target_group" "asg" {
   }
 }
 
+resource "aws_lb_listener_rule" "asg" {
+  listener_arn = aws_lb_listener.http.arn
+  priority = 100
+
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
+  }
+
+  action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.asg.arn
+  }
+}
 
 
-
-
-
+output "alb_dns_name" {
+  value = aws_lb.terra-lb
+}
 
 
 
