@@ -13,6 +13,11 @@ module "webserver-cluster" {
   max_size = 2
 
   enable_autoscaling = false
+
+  custom_tags = {
+    Owner = "team-foo"
+    DeployedBy = "terraform"
+  }
 }
 
 resource "aws_security_group_rule" "allow_testing_inbound" {

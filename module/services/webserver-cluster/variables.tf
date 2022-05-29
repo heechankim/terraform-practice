@@ -54,3 +54,15 @@ variable "enable_autoscaling" {
   description = "If set to true, enable auto scaling"
   type = bool
 }
+
+variable "custom_tags" {
+  description = "Custom tags to set on the Instances in the ASG"
+  type = map(string)
+  default = {}
+}
+
+variable "enable_new_user_data" {
+  description = "If set to true, use the new User Data script"
+  type = bool
+}
+
