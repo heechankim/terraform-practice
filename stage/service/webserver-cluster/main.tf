@@ -2,6 +2,14 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
+data "terraform_remote_state" "db" {
+  backend = "s3"
+
+  config = {
+    key = "stage/data-stores/mysql/terraform.tfstate"
+  }
+}
+
 data "aws_subnets" "default" {
   filter {
     name = "vpc-id"
