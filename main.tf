@@ -19,12 +19,12 @@ resource "aws_default_subnet" "default" {
   force_destroy = true
 }
 
-resource "aws_instance" "this" {
+resource "aws_instance" "example" {
   ami = "ami-063454de5fe8eba79"
   instance_type = "t2.micro"
 
   tags = {
-    Name = "test instance"
+    Name = "terraform-example"
   }
   subnet_id = aws_default_subnet.default.id
 }
