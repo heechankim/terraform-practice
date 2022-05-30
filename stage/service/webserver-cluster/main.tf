@@ -6,6 +6,10 @@ module "webserver-cluster" {
   source = "../../../module/services/webserver-cluster"
 
   cluster_name = "webservers-stage"
+
+  ami = "ami-063454de5fe8eba79"
+  server_text = "New Server Text"
+
   db_remote_state_bucket = "chan-terraform-up-and-running-state"
   db_remote_state_key = "stage/data-stores/mysql/terraform.tfstate"
   instance_type = "t2.micro"

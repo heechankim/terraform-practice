@@ -1,6 +1,6 @@
 #!/bin/bash
 cat > index.html <<EOF
-<h1>Hello, World!!</h1>
+<h1>${server_text}</h1>
 <br/><br/><hr/>
 <p>Host: `uname -a`</p>
 <p>DB Address: ${db_address}</p>

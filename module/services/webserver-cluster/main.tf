@@ -24,39 +24,22 @@ data "aws_subnets" "default" {
 }
 
 data "template_file" "user_data" {
-  count = var.enable_new_user_data ? 0 : 1
   template = file("${path.module}/user-data.sh")
 
   vars = {
     server_port = var.server_port
     db_address = data.terraform_remote_state.db.outputs.address
     db_port = data.terraform_remote_state.db.outputs.port
+    server_text = var.server_text
   }
 }
-
-data "template_file" "user_data_new" {
-  count = var.enable_new_user_data ? 1 : 0
-
-  template = file("${path.module}/user-data-new.sh")
-
-  vars = {
-    server_port = var.server_port
-  }
-}
-
-
 
 resource "aws_launch_configuration" "example" {
-  image_id = "ami-063454de5fe8eba79"
+  image_id = var.ami
   instance_type = var.instance_type
   security_groups = [aws_security_group.instance.id]
 
   user_data = data.template_file.user_data.rendered
-  #  user_data = (
-  #    length(data.template_file.user_data[*]) > 0 
-  #    ? data.template_file.user_data[0].rendered
-  #    : data.template_file.user_data_new[0].rendered
-  #  )
 
   lifecycle {
     create_before_destroy = true
@@ -64,6 +47,8 @@ resource "aws_launch_configuration" "example" {
 }
 
 resource "aws_autoscaling_group" "example" {
+  name = "${var.cluster_name}-${aws_launch_configuration.example.name}"
+
   launch_configuration = aws_launch_configuration.example.name
   vpc_zone_identifier = data.aws_subnets.default.ids 
 
@@ -73,6 +58,12 @@ resource "aws_autoscaling_group" "example" {
   min_size = var.min_size
   max_size = var.max_size
 
+  min_elb_capacity = var.min_size
+
+  lifecycle { 
+    create_before_destroy = true
+  }
+
   tag {
     key = "Name"
     value = "${var.cluster_name}-asg"
@@ -80,7 +71,12 @@ resource "aws_autoscaling_group" "example" {
   }
 
   dynamic "tag" {
-    for_each = var.custom_tags
+    for_each = {
+      for key, value in var.custom_tags:
+      key => upper(value)
+      if key != "Name"
+    }
+
     content { 
       key = tag.key
       value = tag.value
